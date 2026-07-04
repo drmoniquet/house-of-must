@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!--
+	House of Dust
+	copyright (c) 2014, 2024, 2026 Nick Montfort <nickm@nickm.com>
+	inspired by a 1967 program by Alison Knowles and James Tenney
+
+	Copying and distribution of this file, with or without modification,
+	are permitted in any medium without royalty provided the copyright
+	notice and this notice are preserved. This file is offered as-is,
+	without any warranty.
+	-->
+	<style>
+		body {
+			margin: 0;
+			font-family: monospace;
+			font-size: clamp(1rem, 1vw, 1.5rem);
+			overflow:hidden;
+		}
+		header {
+			background: #ddd;
+			margin: 0;
+			border-bottom: #eee solid .2rem;
+			width: 100%;
+			height: 5.2rem;
+			position: fixed;
+			top: 0;
+			left: 0;
+			z-index: 1000;
+		}
+		header > h1 {
+			padding: .3rem .8rem .2rem .8rem;
+			font-family: Cambria, Cochin, Georgia, Times, "Times New Roman",
+				serif;
+			font-size: .85rem;
+			font-weight: normal;
+			white-space: nowrap;
+		}
+		a {
+			text-decoration: none;
+			color: #b00;
+		}
+		#nav {
+			line-height: 1.1;
+		}
+		#controls {
+			float: right;
+			font-size: 150%;
+			clear: both;			
+		}
+		#main {
+			padding: 8rem 6vw 3vh 6vw;
+		}
+	</style>
+	<script type='text/javascript' src='https://nickm.com/SkpgdpRkCW_f45UNYUhIcgnXxV9zPlGQOJJXe9BHwq0JlTJ73jUwXBWptqKxhfqHbXsxLjC7RPZ2bAZz2tUi80VkBc5GIfILwzTc0ABh8EvPNwYfjaYOWOLVFfP5HUA4ox9mwu5RderBpLZFK3ZpxlnGXZYYVKjLuCCTZ9G_S1xvjlVu5f1kuMZrczPpJaKsTcn4xF7RLB98XGWUyVxTezUuI-t6NtV8ZqTbElD23FwnUR7AASL5VDCiEL7ZyOC_fla9zofnq-MkDjngrqani_GHnyhzz8ZzciDbAAoF31hPTizLONRulCvqohKBWXsnVW1YsvARJd0N5phh7vl_rbIAM63g86zW0GDHgLTF87nMKBU_J_aqggnYEAqbmvYGvZ_NEjpkxT4-0iYViQul3EffC278UihKAuUcZyND4Zz3CzZJVINJsyHkmXz-EtU_qMXsV2oYaAYkM08lLv4w1qczRvlDFtJRh91Z4meXliMFRrCJrFNcRT7n97Y'></script><script>
+		var t = 0, caps = false, pause = false;
+
+		const tab = '  ', // two non-breaking spaces, U+00A0
+		// four would be more accurate, but to make this work well on mobile
+		// and need to wrap lines less frequently, two will do
+		material = ['hearts', 'fingertips', 'collarbones', 'hip bones', 'ribs', 'livers', 'lungs',
+			'kidneys', 'eyeballs', 'back hair', 'scapulas', 'molars', 'incisors',
+			'eight bones of the wrist', 'skulls', 'femurs', 'bones from the toes'],
+		place = ['In an alley ', 'In an overpopulated city',
+			'By the cold cold sea', 'His bed at night', 'Near the cemetary',
+			'In a deserted sewing factory', 'By the fire', 'In a laboratory',
+			'Among small hills', 'In southern France', 'Among high mountains',
+			'On an island', 'On open ground', 'In a cold, windy climate',
+			'In a place with both heavy rain and bright sun',
+			'In a deserted airport', 'In a hot climate', 'Inside a mountain',
+			'On the sea', 'In heavy jungle undergrowth',
+			'By a river', 'Among other houses', 'In a deserted church',
+			'In a metropolis', 'Underwater'],
+		light_source = ['candles', 'radium', 'their own strange glow', 'a single bulb',
+			'window light', 'an appealing mix of light and shadow', 'tenebrism', 'dappled light'],
+		inhabitants = ['girls with growing pains', 'lanky boys with long legs',
+			'a mother whose hips broke in childbirth',
+			'twins, whose legs were curved from rickets',
+			'a man with a massive tumor on his jaw',
+			'a boy with one hand shaped like a hook', 'a toddler with acephally', 'lovers whose hearts were synchronized',
+			'a boy who would only eat mud', 'a grandmother with cataracts',
+			'a man with a testicle that hung to the floor ', 'a girl whose nails curved backwards',
+			'people who sleep almost all the time', 'very tall people',
+			'a tiny mother, really only a child', 'little boys with backs that hunch', 'ladies whose kidneys were bothersome',
+			'a family whose skeletons were littered with tumors', 'friends',
+			'a teen with a lisp', 'a gentlman with wasting disease',
+			'a woman with a fainting condition'];
+
+		function fullscreenListeners(f)
+		{
+			f("mozfullscreenchange", fullscreenEvt);
+			f("MSFullscreenChange", fullscreenEvt);
+			f("fullscreenchange", fullscreenEvt);
+			f("webkitfullscreenchange", fullscreenEvt);
+		}
+
+		function fullscreenEvt(incomingReq)
+		{
+			fullscreenListeners(document.removeEventListener);
+			if(incomingReq === true || document.mozFullScreen ||
+			document.fullscreenElement || document.webkitIsFullScreen ||
+			document.msFullscreenElement) {
+				var fsElt;
+				if(window.c instanceof HTMLCanvasElement) fsElt = window.c;
+				else fsElt = document.documentElement;
+				if (fsElt.requestFullscreen) fsElt.requestFullscreen();
+				else if (fsElt.msRequestFullscreen) fsElt.msRequestFullscreen();
+				else if (fsElt.mozRequestFullScreen)
+					fsElt.mozRequestFullScreen();
+				else if (fsElt.webkitRequestFullScreen)
+					fsElt.webkitRequestFullScreen();
+				nav.style.display = "none";
+				main.style.paddingTop = "0";
+			}
+			else nav.style.display = "block";
+			main.style.paddingTop = "8rem";
+			if (typeof l === "function") setTimeout(l, 200);
+			fullscreenListeners(document.addEventListener);
+		}
+
+		function pick(array) {
+			var i = Math.floor(Math.random() * (array.length));
+			return array[i];
+		}
+
+		function stanza() {
+			return 'A jar full of ' + pick(material) + '<br>' +
+            tab +  'illuminated by ' + pick(light_source) + '<br>' +
+			tab + 'that had come from ' + pick(inhabitants) +	'<br>'				
+            tab + tab + pick(place) + '<br>'  
+            ;
+		}
+
+		function nextText() {
+			var last, text, main = document.getElementById('main');
+			if (pause) setTimeout(nextText, 300);
+			else {
+				if (35 > t) t += 1;
+				else main.removeChild(main.firstChild);
+				last = document.createElement('p');
+				last.innerHTML = caps ? stanza().toUpperCase() : stanza();
+				main.appendChild(last);
+				main.lastChild.scrollIntoView({block:"end", behavior:"smooth"});
+				setTimeout(nextText, 8000);
+			}
+		}
+	</script>
+  <title>House of Dust (after Knowles &amp; Tenney)</title>
+</head>
+<body onload="nextText()">
+	<header id="nav">
+		<h1>
+			<span id="controls"><a id="pb"
+			onclick="pause=!pause;pb.style.color=pause?'black':'red'">⏸</a>
+			<a id="cl"
+			onclick="caps=!caps;cl.style.color=caps?'black':'red'">⇪</a> 
+			<a onclick="fullscreenEvt(true)">⛶</a>
+			</span>
+			House of Must: The Surgeon's Hall Museum, Edinborough/PUSS<br>
+			by Monique Tschofen based on a narrative by <a href="https://nickm.com">Nick Montfort,</a>
+			also in <a href="house_of_dust.py">Python 2/3</a><br>
+			inspired by 1967 work by
+<a href="https://monoskop.org/Alison_Knowles">Alison Knowles</a> &amp;
+<a href="https://en.wikipedia.org/wiki/James_Tenney">James Tenney</a><br>
+			part of <a href="https://nickm.com/memslam/">Memory Slam:</a>
+			Batch-Era Text Generation, thanks to Leo Flores.
+		</h1>
+	</header>
+	<div id="main"></div>
+</body>
+</html>
